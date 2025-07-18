@@ -1,0 +1,5 @@
+Collecting scipy
+  Using cached scipy-1.16.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (61 kB)
+Requirement already satisfied: numpy<2.6,>=1.25.2 in ./revolutionary_env/lib/python3.13/site-packages (from scipy) (2.3.1)
+Using cached scipy-1.16.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (35.1 MB)
+Installing collected packages: scipy

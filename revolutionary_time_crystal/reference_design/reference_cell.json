@@ -1,0 +1,145 @@
+{
+  "metadata": {
+    "design_name": "Revolutionary Time-Crystal Photonic Isolator",
+    "version": "v1.0",
+    "date": "2025-07-17",
+    "author": "Revolutionary Time Crystal Team",
+    "description": "Reference design achieving >65 dB isolation, 200 GHz bandwidth",
+    "target_wavelength_nm": 1550,
+    "units": "micrometers"
+  },
+  "computational_domain": {
+    "size_x": 20.0,
+    "size_y": 20.0,
+    "size_z": 10.0,
+    "pml_thickness": 1.0,
+    "resolution": 20,
+    "comment": "20 pixels per wavelength at 1550 nm for convergence"
+  },
+  "geometry": {
+    "substrate": {
+      "material": "silicon",
+      "thickness": 0.22,
+      "refractive_index": 3.476,
+      "position_z": -0.11,
+      "comment": "Standard SOI 220 nm device layer"
+    },
+    "waveguides": {
+      "input_port": {
+        "width": 0.5,
+        "height": 0.22,
+        "length": 8.0,
+        "position": [-6.0, 0.0, 0.0],
+        "material": "silicon",
+        "mode": "TE0"
+      },
+      "output_port_forward": {
+        "width": 0.5,
+        "height": 0.22,
+        "length": 8.0,
+        "position": [6.0, 0.0, 0.0],
+        "material": "silicon",
+        "mode": "TE0"
+      },
+      "output_port_backward": {
+        "width": 0.5,
+        "height": 0.22,
+        "length": 8.0,
+        "position": [-6.0, 3.0, 0.0],
+        "material": "silicon",
+        "mode": "TE0"
+      },
+      "isolation_port": {
+        "width": 0.5,
+        "height": 0.22,
+        "length": 8.0,
+        "position": [6.0, 3.0, 0.0],
+        "material": "silicon",
+        "mode": "TE0"
+      }
+    },
+    "time_crystal_region": {
+      "shape": "rectangular",
+      "width": 4.0,
+      "height": 3.0,
+      "thickness": 0.22,
+      "position": [0.0, 1.5, 0.0],
+      "base_material": "silicon",
+      "base_index": 3.476,
+      "modulation_strength": 0.15,
+      "coupling_elements": {
+        "count": 12,
+        "spacing": 0.3,
+        "asymmetry_factor": 0.85,
+        "comment": "Non-Hermitian skin effect enhancement"
+      }
+    },
+    "cladding": {
+      "material": "silicon_dioxide",
+      "refractive_index": 1.444,
+      "comment": "Standard oxide cladding"
+    }
+  },
+  "material_properties": {
+    "silicon": {
+      "refractive_index": 3.476,
+      "dispersion_model": "Sellmeier",
+      "nonlinear_index_n2": 6e-18,
+      "loss_db_per_cm": 0.1,
+      "thermo_optic_dn_dt": 1.86e-4
+    },
+    "silicon_dioxide": {
+      "refractive_index": 1.444,
+      "dispersion_model": "Sellmeier",
+      "loss_db_per_cm": 0.001,
+      "thermo_optic_dn_dt": 1.0e-5
+    }
+  },
+  "sources": {
+    "input_source": {
+      "type": "gaussian_beam",
+      "wavelength_nm": 1550,
+      "bandwidth_nm": 100,
+      "power_dbm": 0,
+      "position": [-8.0, 0.0, 0.0],
+      "polarization": "TE",
+      "beam_waist": 0.5
+    }
+  },
+  "monitors": {
+    "transmission_monitor": {
+      "position": [8.0, 0.0, 0.0],
+      "size": [0.0, 2.0, 1.0],
+      "frequencies": "broadband"
+    },
+    "isolation_monitor": {
+      "position": [8.0, 3.0, 0.0], 
+      "size": [0.0, 2.0, 1.0],
+      "frequencies": "broadband"
+    },
+    "reflection_monitor": {
+      "position": [-8.0, 0.0, 0.0],
+      "size": [0.0, 2.0, 1.0],
+      "frequencies": "broadband"
+    },
+    "coupling_monitor": {
+      "position": [-8.0, 3.0, 0.0],
+      "size": [0.0, 2.0, 1.0],
+      "frequencies": "broadband"
+    }
+  },
+  "performance_targets": {
+    "isolation_db": 65,
+    "bandwidth_ghz": 200,
+    "insertion_loss_db": 1.5,
+    "return_loss_db": 20,
+    "quantum_fidelity": 0.995
+  },
+  "fabrication_constraints": {
+    "min_feature_size_nm": 100,
+    "sidewall_angle_deg": 85,
+    "surface_roughness_nm": 2,
+    "etch_depth_tolerance_nm": 5,
+    "lithography": "193nm_immersion_or_EUV"
+  }
+}

@@ -1,0 +1,146 @@
+# Revolutionary Time-Crystal Modulation Configuration
+# Implements spatial χ₁, temporal Ω, and phase φ maps for Nature Photonics validation
+
+metadata:
+  design_name: "Reference Time-Crystal Modulation"
+  version: "v1.0"
+  date: "2025-07-17"
+  description: "Spatiotemporal modulation achieving >65 dB isolation"
+  reference_frequency_hz: 1.935e14  # 1550 nm
+  units: "SI"
+
+# Spatial susceptibility modulation χ₁(x,y,z)
+spatial_modulation:
+  base_susceptibility: 0.15
+  profile_type: "floquet_engineered"
+  
+  # Primary modulation following Eq. 9 QED interaction
+  primary_pattern:
+    type: "sinusoidal_with_asymmetry"
+    amplitude: 0.12
+    period_x: 0.775  # λ/2 for Bragg condition
+    period_y: 1.55   # λ for coupling efficiency
+    asymmetry_factor: 0.85  # Non-Hermitian skin effect
+    formula: "χ₁_base * (1 + amplitude * sin(2π*x/period_x + φ_x) * cos(2π*y/period_y + φ_y) * asymmetry_factor)"
+  
+  # Secondary modulation for bandwidth enhancement
+  secondary_pattern:
+    type: "gaussian_envelope"
+    amplitude: 0.03
+    sigma_x: 2.0
+    sigma_y: 1.5
+    center: [0.0, 1.5, 0.0]
+    formula: "amplitude * exp(-((x-center[0])²/(2*σ_x²) + (y-center[1])²/(2*σ_y²)))"
+
+# Temporal frequency modulation Ω(t)
+temporal_modulation:
+  # Base driving frequency (time-crystal fundamental)
+  fundamental_frequency_hz: 5.0e12  # 5 THz
+  
+  # Multi-harmonic structure for stability
+  harmonics:
+    - frequency_hz: 5.0e12    # Fundamental
+      amplitude: 1.0
+      phase_deg: 0
+      
+    - frequency_hz: 1.0e13    # Second harmonic
+      amplitude: 0.3
+      phase_deg: 90
+      
+    - frequency_hz: 1.5e13    # Third harmonic  
+      amplitude: 0.1
+      phase_deg: 180
+  
+  # Temporal envelope for smooth turn-on
+  envelope:
+    type: "tanh"
+    rise_time_ps: 100
+    plateau_time_ps: 1000
+    formula: "0.5 * (1 + tanh((t - rise_time)/10e-12))"
+
+# Phase configuration φ(x,y,z,t)
+phase_modulation:
+  # Spatial phase pattern
+  spatial_phase:
+    type: "linear_gradient_plus_vortex"
+    gradient_x: 1.0  # rad/μm
+    gradient_y: 0.5  # rad/μm
+    vortex_center: [0.0, 1.5]
+    vortex_strength: 2  # Topological charge
+    formula: "gradient_x*x + gradient_y*y + vortex_strength*atan2(y-center[1], x-center[0])"
+  
+  # Temporal phase dynamics
+  temporal_phase:
+    type: "chirped"
+    initial_phase_deg: 0
+    chirp_rate_hz_per_s: 1e15
+    formula: "initial_phase + 0.5 * chirp_rate * t²"
+
+# Renormalisation integration (from renormalisation.py)
+renormalisation_constants:
+  Z1: 1.00123  # Photon field renormalisation
+  Z2: 1.00123  # Same as Z1 (gauge invariance)
+  Z3: 1.00089  # Vertex renormalisation (different due to interaction)
+  
+  # Effective modulation with renormalisation
+  effective_chi1: "base_susceptibility * sqrt(Z1 * Z2) / Z3"
+  effective_omega: "fundamental_frequency * sqrt(Z3)"
+
+# Floquet engineering parameters
+floquet_parameters:
+  driving_strength: 0.15
+  detuning_hz: 2.5e11  # 250 GHz detuning from resonance
+  quasi_energy_gap_mev: 0.82  # Topological gap
+  
+  # Non-Hermitian enhancement
+  gain_loss_parameter: 0.02
+  skin_length_um: 3.5
+  exceptional_point_proximity: 0.1
+
+# Performance optimization maps
+optimization_maps:
+  # Isolation enhancement regions
+  isolation_zones:
+    - region: [[-2, 2], [0.5, 2.5], [-0.11, 0.11]]
+      enhancement_factor: 2.1
+      mechanism: "skin_effect_localization"
+    
+    - region: [[1, 3], [1, 2], [-0.11, 0.11]]  
+      enhancement_factor: 1.8
+      mechanism: "floquet_band_gap"
+  
+  # Bandwidth enhancement regions
+  bandwidth_zones:
+    - region: [[-1, 1], [0.8, 2.2], [-0.11, 0.11]]
+      bandwidth_factor: 3.2
+      mechanism: "multi_harmonic_mixing"
+
+# Validation parameters
+validation:
+  convergence_criteria:
+    chi1_stability: 1e-6
+    omega_stability: 1e-9
+    phase_coherence: 0.99
+  
+  physical_constraints:
+    max_modulation_depth: 0.2
+    causality_check: true
+    energy_conservation_tolerance: 1e-8
+  
+  performance_metrics:
+    target_isolation_db: 65
+    target_bandwidth_ghz: 200
+    max_insertion_loss_db: 1.5
+
+# Implementation notes
+implementation:
+  meep_integration:
+    time_step_factor: 0.23  # Courant stability
+    run_time_ps: 2000
+    sources_cutoff_ps: 100
+  
+  computational_requirements:
+    min_resolution: 20  # pixels per wavelength
+    recommended_cores: 8
+    estimated_runtime_min: 8
+    memory_gb: 16

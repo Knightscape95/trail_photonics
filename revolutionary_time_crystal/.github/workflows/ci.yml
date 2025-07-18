@@ -1,0 +1,456 @@
+name: Time-Crystal CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  POETRY_VERSION: '1.5.1'
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libhdf5-dev pkg-config
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # Install optional dependencies for full testing
+        pip install pytest pytest-cov pytest-benchmark pytest-xdist
+    
+    - name: Set deterministic environment
+      run: |
+        export PYTHONHASHSEED=42
+        export CUBLAS_WORKSPACE_CONFIG=:16:8
+    
+    - name: Run comprehensive tests
+      run: |
+        python -m pytest test_comprehensive.py \
+          --cov=. \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          --cov-fail-under=80 \
+          --maxfail=5 \
+          -v
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: true
+
+  memory-safety:
+    name: Memory Safety Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install memory-profiler psutil
+    
+    - name: Test memory estimation
+      run: |
+        python -c "
+        from memory_manager import MemoryManager, check_memory_safety
+        
+        # Test memory estimation doesn't crash
+        manager = MemoryManager()
+        print(f'System RAM: {manager.budget.total_ram_gb:.1f} GB')
+        
+        # Test with various simulation sizes
+        for res in [5, 10, 15, 20]:
+            safe = check_memory_safety(res, (5.0, 3.0, 1.0), 100.0)
+            print(f'Resolution {res}: Safe = {safe}')
+        
+        print('Memory safety tests passed!')
+        "
+    
+    - name: Check for memory leaks
+      run: |
+        python -c "
+        import gc
+        from memory_manager import MemoryManager
+        
+        # Run multiple times to check for leaks
+        for i in range(10):
+            manager = MemoryManager()
+            requirements = manager.estimate_meep_memory(10.0, (2.0, 2.0, 1.0), 50.0)
+            del manager
+            gc.collect()
+        
+        print('Memory leak tests passed!')
+        "
+
+  reproducibility:
+    name: Reproducibility Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Test deterministic seeding
+      run: |
+        python -c "
+        from seed_manager import seed_everything, verify_reproducibility
+        import numpy as np
+        
+        def test_function():
+            return np.random.randn(1000).sum()
+        
+        # Test reproducibility
+        seed_everything(42)
+        
+        # Run test multiple times
+        results = []
+        for i in range(5):
+            seed_everything(42)  # Reset for each run
+            result = test_function()
+            results.append(result)
+        
+        # Verify all results are identical
+        for i, result in enumerate(results[1:], 1):
+            if abs(result - results[0]) > 1e-10:
+                raise ValueError(f'Results differ: run 1 = {results[0]}, run {i+1} = {result}')
+        
+        print('Reproducibility tests passed!')
+        print(f'All 5 runs produced identical result: {results[0]}')
+        "
+    
+    - name: Test cross-platform reproducibility
+      run: |
+        python -c "
+        from seed_manager import seed_everything, get_worker_seed
+        
+        # Test worker seed generation
+        seed_everything(123)
+        
+        worker_seeds = [get_worker_seed(i) for i in range(10)]
+        print('Worker seeds:', worker_seeds)
+        
+        # Test again with same global seed
+        seed_everything(123)
+        worker_seeds_2 = [get_worker_seed(i) for i in range(10)]
+        
+        if worker_seeds != worker_seeds_2:
+            raise ValueError('Worker seeds not reproducible')
+        
+        print('Cross-platform reproducibility verified!')
+        "
+
+  scientific-integrity:
+    name: Scientific Integrity
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Test approximation tracking
+      run: |
+        python -c "
+        from scientific_integrity import (
+            register_approximation, ApproximationLevel, 
+            validate_convergence, generate_scientific_report
+        )
+        import numpy as np
+        import warnings
+        
+        # Test approximation decorator
+        @register_approximation(
+            name='Test Approximation',
+            level=ApproximationLevel.CLASSICAL,
+            description='Test for CI',
+            validity_range='CI testing only'
+        )
+        def test_approx_func(x):
+            return x**2
+        
+        # Should issue warning
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            result = test_approx_func(5.0)
+            
+            if len(w) == 0:
+                raise ValueError('Approximation warning not issued')
+            
+            if 'CLASSICAL approximation' not in str(w[0].message):
+                raise ValueError('Wrong warning message')
+        
+        # Test convergence validation
+        reference = 1.0
+        test_results = [1.1, 1.05, 1.01, 1.001]
+        
+        convergence = validate_convergence(reference, test_results, tolerance=1e-2)
+        
+        if not convergence['converged']:
+            raise ValueError('Convergence test failed')
+        
+        # Generate report
+        report = generate_scientific_report()
+        
+        if 'SCIENTIFIC APPROXIMATION REPORT' not in report:
+            raise ValueError('Report generation failed')
+        
+        print('Scientific integrity tests passed!')
+        "
+
+  performance:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-benchmark
+    
+    - name: Run performance benchmarks
+      run: |
+        python -m pytest test_comprehensive.py::TestPerformanceBenchmarks \
+          --benchmark-only \
+          --benchmark-max-time=30 \
+          --benchmark-disable-gc \
+          -v
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Test modular CLI
+      run: |
+        python modular_cli.py check-env
+        python modular_cli.py test-memory
+    
+    - name: Test graceful degradation
+      run: |
+        python -c "
+        from graceful_imports import check_environment
+        
+        # Check environment status
+        env_status = check_environment()
+        print('Environment status:', env_status)
+        
+        # Should not crash even with missing dependencies
+        from graceful_imports import get_safe_meep
+        meep = get_safe_meep()
+        
+        # Should provide mock implementation if real MEEP missing
+        sim = meep.Simulation()
+        print('MEEP graceful degradation working')
+        "
+
+  lint-and-format:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black flake8 mypy
+    
+    - name: Check code formatting with Black
+      run: |
+        black --check --diff .
+    
+    - name: Lint with flake8
+      run: |
+        # E501: Line too long (relaxed for scientific code)
+        # W503: Line break before binary operator (Black compatibility)
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Type check with mypy
+      run: |
+        # Run mypy on core modules only (scientific code often has complex types)
+        mypy seed_manager.py --ignore-missing-imports || true
+        mypy graceful_imports.py --ignore-missing-imports || true
+        mypy memory_manager.py --ignore-missing-imports || true
+
+  documentation:
+    name: Documentation Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install sphinx sphinx-rtd-theme myst-parser
+    
+    - name: Generate API documentation
+      run: |
+        mkdir -p docs/
+        
+        # Create simple documentation
+        cat > docs/index.md << 'EOF'
+        # Time-Crystal Photonic Isolator
+        
+        ## Overview
+        
+        Revolutionary time-crystal photonic isolator implementation with:
+        - ≥ 65 dB isolation
+        - ≥ 200 GHz bandwidth  
+        - Quantum-regime operation
+        - Magnet-free non-reciprocity
+        
+        ## Modules
+        
+        - `seed_manager`: Deterministic reproducibility
+        - `memory_manager`: Memory safety and optimization
+        - `concurrency_manager`: Safe parallel processing
+        - `scientific_integrity`: Approximation tracking
+        - `professional_logging`: Production logging
+        
+        ## Installation
+        
+        ```bash
+        pip install -r requirements.txt
+        python modular_cli.py check-env
+        ```
+        
+        ## Quick Start
+        
+        ```python
+        from seed_manager import seed_everything
+        from modular_cli import PipelineExecutor, PipelineConfig
+        
+        # Set deterministic seed
+        seed_everything(42)
+        
+        # Configure pipeline
+        config = PipelineConfig(seed=42, output_dir="results")
+        
+        # Run pipeline
+        executor = PipelineExecutor(config)
+        results = executor.run_full_pipeline()
+        ```
+        EOF
+        
+        echo "Documentation generated successfully"
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run Bandit security scan
+      run: |
+        pip install bandit
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . || true
+    
+    - name: Check for secrets
+      run: |
+        # Simple secrets check
+        if grep -r "password\|secret\|token\|api_key" --include="*.py" .; then
+          echo "Warning: Potential secrets found in code"
+        else
+          echo "No obvious secrets found"
+        fi

@@ -1,0 +1,273 @@
+{
+  "metadata": {
+    "description": "Physics parameters for time-crystal isolator simulation",
+    "version": "1.0.0",
+    "date": "2025-07-18",
+    "validation": "Nature Photonics editorial standards"
+  },
+  "electromagnetic": {
+    "wavelength_primary": {
+      "value": 780e-9,
+      "units": "m",
+      "description": "Primary optical wavelength for Rb transitions",
+      "min": 770e-9,
+      "max": 790e-9,
+      "literature_reference": "Rb D2 line at 780.241 nm",
+      "tolerance": 1e-12
+    },
+    "wavelength_secondary": {
+      "value": 1550e-9,
+      "units": "m", 
+      "description": "Telecom wavelength for dual-band operation",
+      "min": 1530e-9,
+      "max": 1570e-9,
+      "literature_reference": "ITU-T C-band telecom standard",
+      "tolerance": 1e-12
+    },
+    "confinement_factor": {
+      "value": 0.8,
+      "units": "dimensionless",
+      "description": "Modal overlap with active medium",
+      "min": 0.1,
+      "max": 0.95,
+      "literature_reference": "Typical waveguide confinement factor range",
+      "tolerance": 0.01
+    },
+    "group_index_primary": {
+      "value": 1.5,
+      "units": "dimensionless",
+      "description": "Group refractive index at primary wavelength",
+      "min": 1.0,
+      "max": 10.0,
+      "literature_reference": "Silicon photonics dispersion",
+      "tolerance": 0.001
+    },
+    "group_index_secondary": {
+      "value": 1.45,
+      "units": "dimensionless", 
+      "description": "Group refractive index at secondary wavelength",
+      "min": 1.0,
+      "max": 10.0,
+      "literature_reference": "Silicon photonics dispersion",
+      "tolerance": 0.001
+    }
+  },
+  "time_crystal": {
+    "driving_frequency": {
+      "value": 1e12,
+      "units": "Hz",
+      "description": "Time-crystal driving frequency",
+      "min": 1e9,
+      "max": 1e15,
+      "literature_reference": "THz regime for time-crystal physics",
+      "tolerance": 1e9
+    },
+    "floquet_order_max": {
+      "value": 10,
+      "units": "dimensionless",
+      "description": "Maximum Floquet order for convergence",
+      "min": 3,
+      "max": 50,
+      "literature_reference": "Floquet theory convergence studies",
+      "tolerance": 1
+    },
+    "magnus_expansion_order": {
+      "value": 4,
+      "units": "dimensionless",
+      "description": "Magnus expansion truncation order",
+      "min": 1,
+      "max": 10,
+      "literature_reference": "Magnus expansion convergence",
+      "tolerance": 1
+    },
+    "asymmetry_factor": {
+      "value": 0.1,
+      "units": "dimensionless",
+      "description": "Non-reciprocity asymmetry factor",
+      "min": 0.001,
+      "max": 0.5,
+      "literature_reference": "Non-reciprocal device specifications",
+      "tolerance": 0.001
+    }
+  },
+  "quantum_optics": {
+    "cooperativity": {
+      "value": 10.0,
+      "units": "dimensionless",
+      "description": "Quantum emitter cooperativity parameter",
+      "min": 0.1,
+      "max": 1000.0,
+      "literature_reference": "Strong coupling regime threshold",
+      "tolerance": 0.1
+    },
+    "decay_rate_radiative": {
+      "value": 6.1e6,
+      "units": "Hz",
+      "description": "Radiative decay rate for Rb D2 transition",
+      "min": 1e6,
+      "max": 1e8,
+      "literature_reference": "Rb D2 transition properties",
+      "tolerance": 1e5
+    },
+    "decay_rate_dephasing": {
+      "value": 1e6,
+      "units": "Hz",
+      "description": "Pure dephasing rate",
+      "min": 0,
+      "max": 1e8,
+      "literature_reference": "Typical dephasing rates in cold atoms",
+      "tolerance": 1e5
+    },
+    "temperature_operation": {
+      "value": 1.0,
+      "units": "K",
+      "description": "Operating temperature for quantum regime",
+      "min": 0.01,
+      "max": 300.0,
+      "literature_reference": "Dilution refrigerator operation",
+      "tolerance": 0.01
+    }
+  },
+  "materials": {
+    "linbo3_eo_coefficient": {
+      "value": 30.8e-12,
+      "units": "m/V",
+      "description": "LiNbO3 electro-optic coefficient r33",
+      "min": 25e-12,
+      "max": 35e-12,
+      "literature_reference": "LiNbO3 material properties",
+      "tolerance": 1e-12
+    },
+    "aln_piezo_coefficient": {
+      "value": -5.1e-12,
+      "units": "m/V",
+      "description": "AlN piezoelectric coefficient d33",
+      "min": -7e-12,
+      "max": -3e-12,
+      "literature_reference": "AlN material properties",
+      "tolerance": 1e-12
+    },
+    "silicon_nonlinear_index": {
+      "value": 4.8e-18,
+      "units": "m²/W",
+      "description": "Silicon nonlinear refractive index n2",
+      "min": 3e-18,
+      "max": 6e-18,
+      "literature_reference": "Silicon photonics nonlinearity",
+      "tolerance": 1e-18
+    },
+    "loss_coefficient_waveguide": {
+      "value": 0.1,
+      "units": "dB/cm",
+      "description": "Waveguide propagation loss",
+      "min": 0.01,
+      "max": 10.0,
+      "literature_reference": "Low-loss silicon photonics",
+      "tolerance": 0.01
+    }
+  },
+  "numerical": {
+    "fdtd_grid_resolution": {
+      "value": 20,
+      "units": "points/wavelength",
+      "description": "FDTD spatial resolution",
+      "min": 10,
+      "max": 100,
+      "literature_reference": "FDTD convergence requirements",
+      "tolerance": 1
+    },
+    "convergence_tolerance": {
+      "value": 1e-12,
+      "units": "dimensionless",
+      "description": "Numerical convergence tolerance",
+      "min": 1e-15,
+      "max": 1e-6,
+      "literature_reference": "Machine precision considerations",
+      "tolerance": 1e-15
+    },
+    "max_iterations": {
+      "value": 10000,
+      "units": "dimensionless",
+      "description": "Maximum iterations for iterative solvers",
+      "min": 100,
+      "max": 100000,
+      "literature_reference": "Reasonable computational limits",
+      "tolerance": 1
+    },
+    "time_step_safety_factor": {
+      "value": 0.5,
+      "units": "dimensionless",
+      "description": "CFL condition safety factor",
+      "min": 0.1,
+      "max": 0.9,
+      "literature_reference": "FDTD stability requirements",
+      "tolerance": 0.01
+    }
+  },
+  "performance": {
+    "target_bandwidth_thz": {
+      "value": 1e12,
+      "units": "Hz",
+      "description": "Target isolation bandwidth",
+      "min": 1e9,
+      "max": 10e12,
+      "literature_reference": "THz bandwidth specifications",
+      "tolerance": 1e9
+    },
+    "isolation_requirement": {
+      "value": 25.0,
+      "units": "dB",
+      "description": "Minimum isolation requirement",
+      "min": 15.0,
+      "max": 60.0,
+      "literature_reference": "Optical isolator specifications",
+      "tolerance": 0.1
+    },
+    "insertion_loss_max": {
+      "value": 0.1,
+      "units": "dB",
+      "description": "Maximum forward insertion loss",
+      "min": 0.01,
+      "max": 3.0,
+      "literature_reference": "Low-loss device requirements",
+      "tolerance": 0.01
+    },
+    "switching_speed_requirement": {
+      "value": 1e8,
+      "units": "Hz",
+      "description": "Minimum switching speed",
+      "min": 1e6,
+      "max": 1e12,
+      "literature_reference": "High-speed modulator specs",
+      "tolerance": 1e6
+    }
+  },
+  "computational_resources": {
+    "default_max_memory_gb": {
+      "value": 8,
+      "units": "GB",
+      "description": "Default memory limit for computations",
+      "min": 1,
+      "max": 1024,
+      "literature_reference": "Typical workstation resources",
+      "tolerance": 1
+    },
+    "default_max_workers": {
+      "value": 4,
+      "units": "dimensionless",
+      "description": "Default number of worker processes",
+      "min": 1,
+      "max": 128,
+      "literature_reference": "Typical CPU core count",
+      "tolerance": 1
+    },
+    "default_precision": {
+      "value": "float64",
+      "units": "string",
+      "description": "Default floating point precision",
+      "options": ["float32", "float64", "float128"],
+      "literature_reference": "IEEE 754 standards",
+      "tolerance": "exact"
+    }
+  }
+}
